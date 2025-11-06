@@ -18,7 +18,7 @@ xsdb
 xsdb% connect
 ```
 
-// Establish a connection between XSDB and the local JTAG hardware server
+Establish a connection between XSDB and the local JTAG hardware server
 
 ---
 
@@ -28,8 +28,8 @@ xsdb% connect
 xsdb% targets
 ```
 
-// Shows all devices (PLs, PS CPUs, and MicroBlaze cores) detected on the JTAG chain
-// Helps identify the target index number for your FPGA platform and ARM Cortex-A9
+Shows all devices (PLs, PS CPUs, and MicroBlaze cores) detected on the JTAG chain
+Helps identify the target index number for your FPGA platform and ARM Cortex-A9
 
 ---
 
@@ -39,9 +39,9 @@ xsdb% targets
 xsdb% targets -set 80
 ```
 
-// Selects the target index associated with the programmable logic (PL)
-// The number (80 in this case) may vary depending on your setup
-// Ensure you pick the PL related to Zynq (xc7z020), not pure MicroBlaze devices
+Selects the target index associated with the programmable logic (PL)
+The number (80 in this case) may vary depending on your setup
+Ensure you pick the PL related to Zynq (xc7z020), not pure MicroBlaze devices
 
 ---
 
@@ -51,8 +51,8 @@ xsdb% targets -set 80
 xsdb% fpga -file /home/rithwik/gpio_led/gpio_led.runs/impl_1/design_1_wrapper.bit
 ```
 
-// Downloads the bitstream (.bit file) to the FPGA fabric (PL)
-// Ensures GPIO hardware is configured correctly before software execution
+Downloads the bitstream (.bit file) to the FPGA fabric (PL)
+Ensures GPIO hardware is configured correctly before software execution
 
 ---
 
@@ -62,8 +62,8 @@ xsdb% fpga -file /home/rithwik/gpio_led/gpio_led.runs/impl_1/design_1_wrapper.bi
 xsdb% targets -set 77
 ```
 
-// Selects the ARM core cluster parent for further debug control
-// Do NOT select MicroBlaze debug modules
+Selects the ARM core cluster parent for further debug control
+Do NOT select MicroBlaze debug modules
 
 ---
 
@@ -73,8 +73,8 @@ xsdb% targets -set 77
 xsdb% targets -set 78
 ```
 
-// Chooses CPU #0 of the dual-core Zynq A9 MPCore
-// The app will be downloaded and executed on this core
+Chooses CPU #0 of the dual-core Zynq A9 MPCore
+The app will be downloaded and executed on this core
 
 ---
 
@@ -84,8 +84,8 @@ xsdb% targets -set 78
 xsdb% stop
 ```
 
-// Halts execution at current PC address
-// Required before downloading the FSBL or application
+Halts execution at current PC address
+Required before downloading the FSBL or application
 
 ---
 
@@ -95,14 +95,14 @@ xsdb% stop
 xsdb% dow /home/rithwik/gpio_led/gpio_led.vitis/platform/zynq_fsbl/build/fsbl.elf
 ```
 
-// Loads the FSBL which initializes PS peripherals and configures DDR memory
-// Memory, SLCR, and clocks are properly setup before running the application
+Loads the FSBL which initializes PS peripherals and configures DDR memory
+Memory, SLCR, and clocks are properly setup before running the application
 
 ```
 xsdb% con
 ```
 
-// Resume execution and let FSBL run to completion
+Resume execution and let FSBL run to completion
 
 ---
 
@@ -112,8 +112,8 @@ xsdb% con
 xsdb% dow /home/rithwik/gpio_led/gpio_led.vitis/xgpio_example/build/xgpio_example.elf
 ```
 
-// Loads your bare-metal user application into DDR
-// Sets PC to the start address of the program
+Loads your bare-metal user application into DDR
+Sets PC to the start address of the program
 
 ---
 
@@ -123,8 +123,8 @@ xsdb% dow /home/rithwik/gpio_led/gpio_led.vitis/xgpio_example/build/xgpio_exampl
 xsdb% con
 ```
 
-// Starts program execution on ARM Cortex-A9 Core 0
-// GPIO LEDs should toggle as per example functionality
+Starts program execution on ARM Cortex-A9 Core 0
+GPIO LEDs should toggle as per example functionality
 
 ---
 
@@ -134,7 +134,7 @@ xsdb% con
 xsdb% stop
 ```
 
-// Halts program execution to observe and debug state
+Halts program execution to observe and debug state
 
 ---
 
