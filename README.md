@@ -118,7 +118,7 @@ Like
 ### 3) Select the FPGA (PL) That Contains Zynq PS Configuration
 
 ```
-xsdb% targets -set 80
+xsdb% targets -set 26
 ```
 
 Selects the target index associated with the programmable logic (PL)
@@ -141,7 +141,7 @@ Ensures GPIO hardware is configured correctly before software execution
 ### 5) Select APU (Zynq ARM Cortex-A9 Cluster)
 
 ```
-xsdb% targets -set 77
+xsdb% targets -set 23
 ```
 
 Selects the ARM core cluster parent for further debug control
@@ -152,7 +152,7 @@ Do NOT select MicroBlaze debug modules
 ### 6) Select ARM Core 0 as Debug Context
 
 ```
-xsdb% targets -set 78
+xsdb% targets -set 24
 ```
 
 Chooses CPU #0 of the dual-core Zynq A9 MPCore
