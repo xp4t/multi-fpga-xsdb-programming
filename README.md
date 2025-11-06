@@ -6,6 +6,12 @@ This guide demonstrates how to reliably select, program, and run applications on
 
 ## Steps & Explanation
 
+### Establish XSDB Connection in terminal or open in Vitis -> XSDB Console
+
+```
+xsdb
+```
+
 ### 1) Connect to the Hardware Server
 
 ```
