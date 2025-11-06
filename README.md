@@ -41,7 +41,7 @@ xsdb% targets -set 80
 
 Selects the target index associated with the programmable logic (PL)
 The number (80 in this case) may vary depending on your setup
-Ensure you pick the PL related to Zynq (xc7z020), not pure MicroBlaze devices
+Ensure you pick the PL related to Zynq (xc7z020), not pure MicroBlaze devices if you are working on ZYNQ
 
 ---
 
