@@ -1,251 +1,172 @@
-# Multi-FPGA XSDB Programming Guide
+# XSDB Automation Guide for Zynq FPGA Programming and Application Execution
 
-This guide demonstrates how to reliably select, program, and run applications on the correct FPGA when multiple boards are connected to a single host machine. Each XSDB command is followed by a brief explanation for clarity. Each command is shown first, followed by a descriptive comment explaining what it does.
+This guide walks you through how to **automate programming and running applications** on a Zynq FPGA board using an XSDB `.tcl` script.
+Instead of typing each command manually, this script does the entire setup for you — from reset to running your program — in one go.
 
 ---
 
-## Steps & Explanation
+## What This Script Does
 
-### Establish XSDB Connection in terminal or open in Vitis -> XSDB Console
+The script handles the full process:
+
+1. Resets the board
+2. Connects to the hardware server
+3. Picks the right FPGA and ARM targets
+4. Loads the bitstream
+5. Runs the FSBL (First Stage Bootloader)
+6. Loads and runs your main application
+7. Resets again after execution
+
+You just need to make sure the **target IDs and file paths** are correct for your setup.
+
+---
+
+## Script Name
 
 ```
+program_zynq_auto.tcl
+```
+
+---
+
+## Step-by-Step Explanation
+
+### 1) Reset Everything First
+
+```tcl
+puts "Initial RESET SYSTEM AND WAIT FOR 2s"
+rst -system
+after 2000
+```
+
+Starts with a clean slate — resets the board and waits for two seconds before moving on.
+
+---
+
+### 2) Connect to the Hardware Server
+
+```tcl
+connect
+after 2000
+```
+
+This connects XSDB to your local JTAG hardware server. If you’re using a remote setup, make sure the `hw_server` is running first.
+
+---
+
+### 3) Check Available Targets
+
+```tcl
+targets
+after 2000
+```
+
+Lists all the devices currently visible on JTAG. You’ll see all the FPGAs, CPUs, and debug modules. Use this info to note down which **target IDs** belong to your Zynq board’s PL and ARM cores.
+
+---
+
+### 4) Select FPGA and Program the Bitstream
+
+```tcl
+targets -set 34
+after 2000
+puts "Programming the FPGA..."
+fpga -file "/home/rithwik/gpio_led/gpio_led.runs/impl_1/design_1_wrapper.bit"
+puts "FPGA Programming Completed!"
+after 2000
+```
+
+This picks the FPGA fabric (PL) and programs your `.bit` file onto it.
+Change the ID (`34`) if your board shows a different number when you run `targets`.
+
+---
+
+### 5) Select the ARM APU and Core 0
+
+```tcl
+targets -set 31
+after 2000
+targets -set 32
+after 2000
+```
+
+These lines select the ARM Cortex-A9 processing system. The first is the APU cluster, the second is **Core 0**. Make sure these IDs match your setup.
+
+---
+
+### 6) Stop CPU and Load the FSBL
+
+```tcl
+stop
+after 2000
+puts "Flashing the First Stage Boot Loader..."
+dow "/home/rithwik/gpio_led/gpio_led.vitis/platform/zynq_fsbl/build/fsbl.elf"
+puts "Completed FSBL Flashing!"
+after 2000
+con
+after 2000
+```
+
+This stops the processor, loads the **First Stage Boot Loader**, and lets it run.
+The FSBL sets up memory, clocks, and peripherals so your main app has everything it needs to run.
+
+---
+
+### 7) Load and Run Your Application
+
+```tcl
+puts "Flashing your application..."
+dow "/home/rithwik/gpio_led/gpio_led.vitis/xgpio_example/build/xgpio_example.elf"
+puts "Completed Flashing!"
+after 2000
+con
+```
+
+Your main program gets loaded into DDR memory and starts running on Core 0.
+If it’s the GPIO LED example, the LEDs should start toggling once this runs.
+
+---
+
+### 8) Wait and Reset Again
+
+```tcl
+puts "XSDB programming sequence completed successfully!"
+puts "A 60s delay has been provided to debug and analyse your waveform"
+after 60000
+rst -system
+puts "Completed the task and reset has been applied"
+```
+
+After running, the script pauses for a minute so you can observe the output or debug signals.
+Then it resets the board again, putting it back into a clean state.
+
+---
+
+## Tips
+
+* Run `targets` every time you reconnect boards — IDs can shuffle around.
+* Double-check file paths for your `.bit`, `fsbl.elf`, and `.elf` files.
+* Don’t delete the `after` delays; they give XSDB enough time between steps.
+* If you’ve got multiple boards connected, make sure you’re programming the right one.
+
+---
+
+## How to Run It
+
+Open a terminal or the XSDB console inside Vitis and type:
+
+```bash
 xsdb
+source ./program_zynq_auto.tcl
 ```
 
-### 1) Connect to the Hardware Server
+That’s it. The script does the rest — resets the board, programs the FPGA, runs the FSBL and your app, waits for a while, and resets everything cleanly.
 
-```
-xsdb% connect
-```
-
-Establish a connection between XSDB and the local JTAG hardware server
+If something fails, rerun the script or go step-by-step manually in XSDB to see where it’s getting stuck.
 
 ---
 
-### 2) List All Available Debug Targets
+## Why This Helps
 
-```
-xsdb% targets
-```
-
-Shows all devices (PLs, PS CPUs, and MicroBlaze cores) detected on the JTAG chain
-Helps identify the target index number for your FPGA platform and ARM Cortex-A9
-Like 
-
-```
-  1  xc7a100t                                                                   
-     2  MicroBlaze Debug Module at USER2
-        3  MicroBlaze #0 (Running)
-  4  xc7a100t
-     5  MicroBlaze Debug Module at USER2
-        6  MicroBlaze #0 (Running)
-  7  xc7a100t
-     8  MicroBlaze Debug Module at USER2
-        9  MicroBlaze #0 (Running)
- 10  xc7a100t
- 11  xc7a100t
-    12  MicroBlaze Debug Module at USER2
-       13  MicroBlaze #0 (Running)
- 14  xc7a100t
-    15  MicroBlaze Debug Module at USER2
-       16  MicroBlaze #0 (Running)
- 17  xc7a100t
-    18  MicroBlaze Debug Module at USER2
-       19  MicroBlaze #0 (Running)
- 20  xc7a100t
-    21  MicroBlaze Debug Module at USER2
-       22  MicroBlaze #0 (Running)
- 23  APU
-    24  ARM Cortex-A9 MPCore #0 (Running)
-    25  ARM Cortex-A9 MPCore #1 (Running)
- 26  xc7z020
- 27  xc7a100t
- 28  xc7a100t
-    29  MicroBlaze Debug Module at USER2
-       30  MicroBlaze #0 (Running)
- 31  APU
-    32  ARM Cortex-A9 MPCore #0 (Running)
-    33  ARM Cortex-A9 MPCore #1 (Running)
- 34  xc7z020
- 35  xc7a100t
- 36  xc7a100t
-    37  MicroBlaze Debug Module at USER2
-       38  MicroBlaze #0 (Running)
- 39  xc7a100t
-    40  MicroBlaze Debug Module at USER2
-       41  MicroBlaze #0 (Running)
- 42  xc7a100t
- 43  xc7a100t
-    44  MicroBlaze Debug Module at USER2
-       45  MicroBlaze #0 (Running)
- 46  xc7a100t
-    47  MicroBlaze Debug Module at USER2
-       48  MicroBlaze #0 (Running)
- 49  xc7a100t
- 50  xc7a100t
-    51  MicroBlaze Debug Module at USER2
-       52  MicroBlaze #0 (Running)
- 53  xc7a100t
- 54  xc7a100t
-    55  MicroBlaze Debug Module at USER2
-       56  MicroBlaze #0 (Running)
- 57  APU
-    58  ARM Cortex-A9 MPCore #0 (Running)
-    59  ARM Cortex-A9 MPCore #1 (Running)
- 60  xc7z020
- 61  xc7a100t
-    62  MicroBlaze Debug Module at USER2
-       63  MicroBlaze #0 (Running)
- 64  xc7a100t
- 65  xc7a100t
-    66  MicroBlaze Debug Module at USER2
-       67  MicroBlaze #0 (Running)
- 68  xc7a100t
-    69  MicroBlaze Debug Module at USER2
-       70  MicroBlaze #0 (Running)
- 71  xc7a100t
-    72  MicroBlaze Debug Module at USER2
-       73  MicroBlaze #0 (Running)
- 74  xc7a100t
-    75  MicroBlaze Debug Module at USER2
-       76  MicroBlaze #0 (Running)
- 77  xc7a100t
-    78  MicroBlaze Debug Module at USER2
-       79  MicroBlaze #0 (Running)
-```
----
-
-### 3) Select the FPGA (PL) That Contains Zynq PS Configuration
-
-```
-xsdb% targets -set 26
-```
-
-Selects the target index associated with the programmable logic (PL)
-The number (80 in this case) may vary depending on your setup
-Ensure you pick the PL related to Zynq (xc7z020), not pure MicroBlaze devices if you are working on ZYNQ and not any APUs
-
----
-
-### 4) Program the FPGA Bitstream
-
-```
-xsdb% fpga -file /home/rithwik/gpio_led/gpio_led.runs/impl_1/design_1_wrapper.bit
-```
-
-Downloads the bitstream (.bit file) to the FPGA fabric (PL)
-Ensures GPIO hardware is configured correctly before software execution
-
----
-
-### 5) Select APU (Zynq ARM Cortex-A9 Cluster)
-
-```
-xsdb% targets -set 23
-```
-
-Selects the ARM core cluster parent for further debug control
-Do NOT select MicroBlaze debug modules
-
----
-
-### 6) Select ARM Core 0 as Debug Context
-
-```
-xsdb% targets -set 24
-```
-
-Chooses CPU #0 of the dual-core Zynq A9 MPCore
-The app will be downloaded and executed on this core
-
----
-
-### 7) Stop the Processor Before Loading Code
-
-```
-xsdb% stop
-```
-
-Halts execution at current PC address
-Required before downloading the FSBL or application
-
----
-
-### 8) Download and Run the FSBL (First Stage Bootloader)
-
-```
-xsdb% dow /home/rithwik/gpio_led/gpio_led.vitis/platform/zynq_fsbl/build/fsbl.elf
-```
-
-Loads the FSBL which initializes PS peripherals and configures DDR memory
-Memory, SLCR, and clocks are properly setup before running the application
-
-```
-xsdb% con
-```
-
-Resume execution and let FSBL run to completion
-
----
-
-### 9) Download the Application into DDR
-
-```
-xsdb% dow /home/rithwik/gpio_led/gpio_led.vitis/xgpio_example/build/xgpio_example.elf
-```
-
-Loads your bare-metal user application into DDR
-Sets PC to the start address of the program
-
----
-
-### 10) Run the Application
-
-```
-xsdb% con
-```
-
-Starts program execution on ARM Cortex-A9 Core 0
-GPIO LEDs should toggle as per example functionality
-
----
-
-### Optional: Stop CPU Execution
-
-```
-xsdb% stop
-```
-
-Halts program execution to observe and debug state
-
----
-
-## Notes
-
-* Target numbers change system-to-system → always run `targets` first
-* Ensure FSBL is always run before the main application to initialize DDR
-* If multiple Zynq boards exist, verify xc7z020 target entries correctly
-* Script works over both local JTAG and remote servers
-* IT HAS BEEN FOUND THAT THE DEVICES WHICH APPEAR ONCE MAY CHANGE IT'S TARGET ID WHILE RECONNECTING TO THE SERVER, KINDLY MODIFY YOUR ID IN
-```
-xsdb% targets -set <ID>
-
-```
-
-
----
-
-## Automation Tip
-
-These XSDB commands can be saved to a `.tcl` script and executed using:
-
-```
-xsdb
-source ./program.tcl
-```
-
-Fully automates FPGA programming + application run flow. 
-If it fails, do manually step by step.
----
-
-This documentation allows convenient and correct programming/debugging when multiple FPGA targets are connected simultaneously.
+Instead of retyping the same commands every time, this one script can bring up your Zynq board from a completely blank state to a fully running application in less than a minute.
+It’s simple, repeatable, and removes human error — so you can focus on testing your design, not typing commands.
