@@ -244,8 +244,8 @@ xsdb
 source ./program.tcl
 ```
 
-// Fully automates FPGA programming + application run flow
-
+Fully automates FPGA programming + application run flow
+If it fails, do manually step by step.
 ---
 
 This documentation allows convenient and correct programming/debugging when multiple FPGA targets are connected simultaneously.
