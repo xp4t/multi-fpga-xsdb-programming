@@ -157,7 +157,7 @@ Open a terminal or the XSDB console inside Vitis and type:
 
 ```bash
 xsdb
-source ./program_zynq_auto.tcl
+source ./program.tcl
 ```
 
 That’s it. The script does the rest — resets the board, programs the FPGA, runs the FSBL and your app, waits for a while, and resets everything cleanly.
