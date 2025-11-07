@@ -24,7 +24,7 @@ You just need to make sure the **target IDs and file paths** are correct for you
 ## Script Name
 
 ```
-program_zynq_auto.tcl
+program.tcl
 ```
 
 ---
@@ -39,7 +39,7 @@ rst -system
 after 2000
 ```
 
-Starts with a clean slate — resets the board and waits for two seconds before moving on.
+Starts with a clean slate — resets the board and waits for two seconds before moving on. This might turn into an error if the previously selected target is a PL Device and not an APU. So you can avoid this if it hits up an error.
 
 ---
 
