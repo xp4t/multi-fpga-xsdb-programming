@@ -39,7 +39,7 @@ rst -system
 after 2000
 ```
 
-Starts with a clean slate — resets the board and waits for two seconds before moving on. This might turn into an error if the previously selected target is a PL Device and not an APU. So you can avoid this if it hits up an error.
+Starts with a clean slate — resets the board and waits for two seconds before moving on. This might turn into an error if the previously selected target is a PL Device and not an APU. So you can avoid this if it hits up an error. It is recommended to comment this for the first use. 
 
 ---
 
