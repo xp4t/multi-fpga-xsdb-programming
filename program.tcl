@@ -1,9 +1,9 @@
 # XSDB Automation Script for Programming Zynq & Running Application
 
-# Initial RESET SYSTEM AND WAIT FOR 2s remove if causing Invalid error
-puts "Initial RESET SYSTEM AND WAIT FOR 2s"
-rst -system
-after 2000
+# Initial RESET SYSTEM AND WAIT FOR 2s (REQUIRED ONLY WHILE DOING THE SECOND TIME)
+# puts "Initial RESET SYSTEM AND WAIT FOR 2s"
+# rst -system
+# after 2000
 
 # 1) Connect to hardware server
 connect
@@ -62,5 +62,6 @@ after 60000
 
 rst -system
 puts "Completed the task and reset has been applied"
+
 
 
