@@ -1,23 +1,20 @@
 # XSDB Automation Guide for Zynq FPGA Programming and Application Execution
 
-This guide walks you through how to **automate programming and running applications** on a Zynq FPGA board using an XSDB `.tcl` script.
-Instead of typing each command manually, this script does the entire setup for you — from reset to running your program — in one go.
+This guide defines a parameterized workflow for automating programming and execution on a Zynq platform using an XSDB `.tcl` script. Hardcoded paths are eliminated using variables.
 
 ---
 
 ## What This Script Does
 
-The script handles the full process:
+End-to-end execution:
 
-1. Resets the board
-2. Connects to the hardware server
-3. Picks the right FPGA and ARM targets
-4. Loads the bitstream
-5. Runs the FSBL (First Stage Bootloader)
-6. Loads and runs your main application
-7. Resets again after execution
-
-You just need to make sure the **target IDs and file paths** are correct for your setup.
+1. System reset
+2. Hardware server connection
+3. Target discovery and selection
+4. Bitstream download to PL
+5. FSBL execution (PS initialization)
+6. Application ELF execution
+7. Post-run delay and system reset
 
 ---
 
@@ -29,9 +26,20 @@ program.tcl
 
 ---
 
+## Required Variables (Defined in Script)
+
+```tcl
+set PROJECT_NAME "gpio_led"
+set USERNAME "rithwik"
+```
+
+All file paths derive from these variables. Changing project or user requires modifying only these two.
+
+---
+
 ## Step-by-Step Explanation
 
-### 1) Reset Everything First
+### 1) Reset System
 
 ```tcl
 puts "Initial RESET SYSTEM AND WAIT FOR 2s"
@@ -39,134 +47,181 @@ rst -system
 after 2000
 ```
 
-Starts with a clean slate — resets the board and waits for two seconds before moving on. This might turn into an error if the previously selected target is a PL Device and not an APU. So you can avoid this if it hits up an error. **It is recommended to comment this for the first use. **
+Ensures deterministic startup state.
+Failure case: active PL target selected → reset error.
+Mitigation: comment this block on first execution or ensure APU context before reset.
 
 ---
 
-### 2) Connect to the Hardware Server
+### 2) Connect to Hardware Server
 
 ```tcl
 connect
 after 2000
 ```
 
-This connects XSDB to your local JTAG hardware server. If you’re using a remote setup, make sure the `hw_server` is running first.
+Attaches XSDB to `hw_server`. Required before any JTAG interaction.
 
 ---
 
-### 3) Check Available Targets
+### 3) Enumerate Targets
 
 ```tcl
 targets
 after 2000
 ```
 
-Lists all the devices currently visible on JTAG. You’ll see all the FPGAs, CPUs, and debug modules. Use this info to note down which **target IDs** belong to your Zynq board’s PL and ARM cores.
+Displays JTAG chain. Required for identifying dynamic target IDs.
 
 ---
 
-### 4) Select FPGA and Program the Bitstream
+### 4) Program FPGA (PL)
 
 ```tcl
 targets -set 34
 after 2000
+
 puts "Programming the FPGA..."
-fpga -file "/home/rithwik/gpio_led/gpio_led.runs/impl_1/design_1_wrapper.bit"
+fpga -file "/home/$USERNAME/$PROJECT_NAME/$PROJECT_NAME.runs/impl_1/design_1_wrapper.bit"
 puts "FPGA Programming Completed!"
 after 2000
 ```
 
-This picks the FPGA fabric (PL) and programs your `.bit` file onto it.
-Change the ID (`34`) if your board shows a different number when you run `targets`.
+* Selects PL device
+* Downloads bitstream
+
+Constraint: target ID must correspond to FPGA fabric.
 
 ---
 
-### 5) Select the ARM APU and Core 0
+### 5) Select Processing System (APU)
 
 ```tcl
 targets -set 31
 after 2000
+
 targets -set 32
 after 2000
 ```
 
-These lines select the ARM Cortex-A9 processing system. The first is the APU cluster, the second is **Core 0**. Make sure these IDs match your setup.
+* First: APU cluster
+* Second: Cortex-A9 Core 0
+
+Execution always binds to selected core.
 
 ---
 
-### 6) Stop CPU and Load the FSBL
+### 6) Load FSBL
 
 ```tcl
 stop
 after 2000
+
 puts "Flashing the First Stage Boot Loader..."
-dow "/home/rithwik/gpio_led/gpio_led.vitis/platform/zynq_fsbl/build/fsbl.elf"
+dow "/home/$USERNAME/$PROJECT_NAME/$PROJECT_NAME.vitis/platform/zynq_fsbl/build/fsbl.elf"
 puts "Completed FSBL Flashing!"
+
 after 2000
 con
 after 2000
 ```
 
-This stops the processor, loads the **First Stage Boot Loader**, and lets it run.
-The FSBL sets up memory, clocks, and peripherals so your main app has everything it needs to run.
+FSBL responsibilities:
+
+* DDR initialization
+* Clock configuration
+* Peripheral enablement
+
+Without FSBL, application execution is undefined.
 
 ---
 
-### 7) Load and Run Your Application
+### 7) Load Application ELF
 
 ```tcl
 puts "Flashing your application..."
-dow "/home/rithwik/gpio_led/gpio_led.vitis/xgpio_example/build/xgpio_example.elf"
+dow "/home/$USERNAME/$PROJECT_NAME/$PROJECT_NAME.vitis/xgpio_example/build/xgpio_example.elf"
 puts "Completed Flashing!"
+
 after 2000
 con
 ```
 
-Your main program gets loaded into DDR memory and starts running on Core 0.
-If it’s the GPIO LED example, the LEDs should start toggling once this runs.
+Loads executable into DDR and starts execution.
 
 ---
 
-### 8) Wait and Reset Again
+### 8) Delay and Reset
 
 ```tcl
 puts "XSDB programming sequence completed successfully!"
 puts "A 60s delay has been provided to debug and analyse your waveform"
+
 after 60000
+
 rst -system
 puts "Completed the task and reset has been applied"
 ```
 
-After running, the script pauses for a minute so you can observe the output or debug signals.
-Then it resets the board again, putting it back into a clean state.
+* Provides observation/debug window
+* Restores system to known idle state
 
 ---
 
-## Tips
+## File Path Abstraction
 
-* Run `targets` every time you reconnect boards — IDs can shuffle around.
-* Double-check file paths for your `.bit`, `fsbl.elf`, and `.elf` files.
-* Don’t delete the `after` delays; they give XSDB enough time between steps.
-* If you’ve got multiple boards connected, make sure you’re programming the right one.
+All critical paths are derived as:
+
+```
+/home/$USERNAME/$PROJECT_NAME/
+```
+
+### Examples
+
+| Artifact    | Path                                                        |
+| ----------- | ----------------------------------------------------------- |
+| Bitstream   | `$PROJECT_NAME.runs/impl_1/design_1_wrapper.bit`            |
+| FSBL        | `$PROJECT_NAME.vitis/platform/zynq_fsbl/build/fsbl.elf`     |
+| Application | `$PROJECT_NAME.vitis/xgpio_example/build/xgpio_example.elf` |
 
 ---
 
-## How to Run It
+## Constraints
 
-Open a terminal or the XSDB console inside Vitis and type:
+* Target IDs are **non-deterministic across sessions**
+* `after` delays are **timing-critical** (XSDB is not synchronous)
+* FSBL must always execute before application
+* CPU must be stopped before `dow`
+
+---
+
+## Execution
 
 ```bash
 xsdb
 source ./program.tcl
 ```
 
-That’s it. The script does the rest — resets the board, programs the FPGA, runs the FSBL and your app, waits for a while, and resets everything cleanly.
+---
 
-If something fails, rerun the script or go step-by-step manually in XSDB to see where it’s getting stuck.
+## Failure Modes
+
+| Symptom              | Root Cause               |
+| -------------------- | ------------------------ |
+| `fpga` fails         | Wrong PL target ID       |
+| `dow` hangs          | CPU not stopped          |
+| App not running      | FSBL not executed        |
+| Reset error          | Incorrect target context |
+| No hardware detected | `hw_server` not running  |
 
 ---
 
-## Why This Helps
+## Operational Advantage
 
-Instead of retyping the same commands every time, this one script can bring up your Zynq board from a completely blank state to a fully running application in less than a minute.
-It’s simple, repeatable, and removes human error — so you can focus on testing your design, not typing commands.
+* Removes manual XSDB sequencing
+* Enforces deterministic bring-up
+* Reduces configuration drift
+* Enables repeatable validation cycles
+* Minimizes human-induced latency and error
+
+---
