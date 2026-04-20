@@ -62,7 +62,13 @@ con
 puts "XSDB programming sequence completed successfully!"
 puts "A 60s delay has been provided to debug and analyse your waveform"
 
+# Uncomment only if you require a serial monitor for printing texts
+#puts "Displaying Serial Monitor"
+#the below comment requires putty installed in your system.
+#exec putty -serial /dev/ttyPYNQ1 -sercfg 115200,8,n,1,N
+#for nerds, I Created a udev rule to assign /dev/ttyPYNQ1 as a persistent name for a specific FPGA board, so it maintains the same device path regardless of USB enumeration order.
 after 60000
+
 
 rst -system
 puts "Completed the task and reset has been applied"
