@@ -3,6 +3,7 @@
 # ===================== USER CONFIG =====================
 set PROJECT_NAME "gpio_led"
 set USERNAME "rithwik"
+set APP_NAME "xgpio_example"
 # ======================================================
 
 # Initial RESET SYSTEM AND WAIT FOR 2s (REQUIRED ONLY WHILE DOING THE SECOND TIME)
@@ -50,7 +51,7 @@ after 2000
 
 # 7) Load and run application ELF
 puts "Flashing your application..."
-dow "/home/$USERNAME/$PROJECT_NAME/$PROJECT_NAME.vitis/xgpio_example/build/xgpio_example.elf"
+dow "/home/$USERNAME/$PROJECT_NAME/$PROJECT_NAME.vitis/$APP_NAME/build/xgpio_example.elf"
 puts "Completed Flashing!"
 
 after 2000
