@@ -1,9 +1,7 @@
-# XSDB Automation Script for Programming Zynq & Running Application
-
 # ===================== USER CONFIG =====================
-set PROJECT_NAME "gpio_led"
-set USERNAME "rithwik"
-set APP_NAME "xgpio_example"
+set PROJECT_NAME "your_project_name"
+set USERNAME "your_username"
+set APP_NAME "app_component"
 # ======================================================
 
 # Initial RESET SYSTEM AND WAIT FOR 2s (REQUIRED ONLY WHILE DOING THE SECOND TIME)
@@ -20,7 +18,7 @@ targets
 after 2000
 
 # 3) Select the correct PL target that contains the PS configuration
-targets -set 26
+targets -set -filter {name =~ "xc7z020"}   
 after 2000
 
 # Program the FPGA bitstream
@@ -30,10 +28,10 @@ puts "FPGA Programming Completed!"
 after 2000
 
 # 4) Select the APU parent and core 0 for debug
-targets -set 23
+targets -set -filter {name =~ "APU"} 
 after 2000
 
-targets -set 24
+targets -set -filter {name =~ "ARM Cortex-A9 MPCore #0"}    
 after 2000
 
 # 5) Stop CPU before loading FSBL
@@ -51,7 +49,7 @@ after 2000
 
 # 7) Load and run application ELF
 puts "Flashing your application..."
-dow "/home/$USERNAME/$PROJECT_NAME/$PROJECT_NAME.vitis/$APP_NAME/build/xgpio_example.elf"
+dow "/home/$USERNAME/$PROJECT_NAME/$PROJECT_NAME.vitis/$APP_NAME/build/$APP_NAME.elf"
 puts "Completed Flashing!"
 
 after 2000
@@ -62,14 +60,10 @@ con
 # Script Finished
 puts "XSDB programming sequence completed successfully!"
 puts "A 60s delay has been provided to debug and analyse your waveform"
-
 # Uncomment only if you require a serial monitor for printing texts
-#puts "Displaying Serial Monitor"
-#the below comment requires putty installed in your system.
+puts "Displaying Serial Monitor"
 #exec putty -serial /dev/ttyPYNQ1 -sercfg 115200,8,n,1,N
-#for nerds, I Created a udev rule to assign /dev/ttyPYNQ1 as a persistent name for a specific FPGA board, so it maintains the same device path regardless of USB enumeration order.
 after 60000
-
 
 rst -system
 puts "Completed the task and reset has been applied"
